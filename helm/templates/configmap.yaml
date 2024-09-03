@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "my-service.name" . }}-config
+data:
+  verbosityLevel: "{{ .Values.config.verbosityLevel }}"
+  maxRetryCount: "{{ .Values.config.maxRetryCount }}"
+  initialDelay: "{{ .Values.config.initialDelay }}"
+  cronSchedule: "{{ .Values.config.cronSchedule }}"

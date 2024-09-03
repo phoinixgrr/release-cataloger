@@ -1,0 +1,60 @@
+# Number of replicas for the deployment
+replicaCount: 3
+
+# Docker image configuration
+image:
+  repository: phoinixgrr/release-cataloger
+  tag: "v0.0.1"
+  pullPolicy: IfNotPresent
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+
+# Ingress configuration
+ingress:
+  enabled: false
+  annotations: {}
+  hosts:
+    - host: chart-example.local
+      paths: []
+  tls: []
+
+# Resource requests and limits for the container
+resources:
+  limits:
+    cpu: 500m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Application-specific configurations
+config:
+  githubToken: ""  # The GitHub token used for authentication. Optional but highly recommended to avoid rate limiting.
+  githubRepo: "grafana/grafana"
+  maxRetryCount: "5"  # Maximum number of retry attempts for fetching releases from the GitHub API.
+  initialDelay: "2s"  # Initial delay before retrying a failed GitHub API request.
+  cronSchedule: "@every 24h"  # Cron schedule for refreshing the release data against the GitHub API.
+  verbosityLevel: "INFO"  # Logging level (e.g., INFO, DEBUG, WARN).
+
+metrics:
+  enabled: true
+  serviceMonitor:
+    # -- Additional labels that can be used so ServiceMonitor will be discovered by Prometheus
+    additionalLabels: {}
+    # -- Interval at which metrics should be scraped.
+    interval: "30s"
+    # -- The name of the label on the target service to use as the job name in Prometheus
+    jobLabel: ""
+    # -- MetricRelabelConfigs to apply to samples before ingestion
+    metricRelabelings: {}
+    # -- Namespace for the ServiceMonitor Resource (defaults to the Release Namespace)
+    namespace: ""
+    # -- The path used by Prometheus to scrape metrics
+    path: "/metrics"
+    # -- RelabelConfigs to apply to samples before scraping
+    relabelings: {}
+    # -- Timeout after which the scrape is ended
+    scrapeTimeout: ""

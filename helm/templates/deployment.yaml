@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "my-service.name" . }}
+  labels:
+    app: {{ include "my-service.name" . }}
+    chart: {{ include "my-service.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: {{ include "my-service.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "my-service.name" . }}
+    spec:
+      serviceAccountName: {{ include "my-service.name" . }}-sa
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 8080
+          env:
+            {{- if .Values.config.githubToken }}
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "my-service.name" . }}-secret
+                  key: githubToken
+            {{- end }}
+            - name: VERBOSITY_LEVEL
+              value: "{{ .Values.config.verbosityLevel }}"
+            - name: MAX_RETRY_COUNT
+              value: "{{ .Values.config.maxRetryCount }}"
+            - name: INITIAL_DELAY
+              value: "{{ .Values.config.initialDelay }}"
+            - name: CRON_SCHEDULE
+              value: "{{ .Values.config.cronSchedule }}"
+            - name: GITHUB_REPO
+              value: "{{ .Values.config.githubRepo }}"
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: APP_LABEL
+              value: {{ include "my-service.name" . }}
+          livenessProbe:
+            httpGet:
+              path: "/releases"
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
